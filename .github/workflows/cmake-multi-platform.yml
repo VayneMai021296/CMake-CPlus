@@ -16,52 +16,60 @@ jobs:
         os: [macos-latest]
         build_type: [Release]
         include:
+          #- os: windows-latest
+          #  c_compiler: cl
+          #  cpp_compiler: cl
+          #- os: ubuntu-latest
+          #  c_compiler: clang
+          #  cpp_compiler: clang++
           - os: macos-latest
             c_compiler: clang
             cpp_compiler: clang++
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          clean: true
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v4
+      with:
+        clean: true
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}  # Sử dụng token mặc định
 
-      - name: Git Fetch & Reset
-        run: |
-          git fetch origin main
-          git reset --hard origin/main
-          git clean -fdx  # Xóa file không cần thiết
+    - name: Git Pull
+      run: git pull origin main
+      shell: bash
 
-      - name: Configure CMake
-        shell: bash
-        run: |
-          cmake -S . -B build \
-                -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
-                -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
-                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+    - name: Clean previous builds
+      run: |
+        rm -rf ${{ github.workspace }}/build
+        git clean -ffdx
+      shell: bash
 
-      - name: Build
-        shell: bash
-        run: cmake --build build --config ${{ matrix.build_type }} --target all
+    - name: Configure CMake
+      shell: bash
+      run: |
+        cmake -B ${{ github.workspace }}/build \
+              -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+              -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
-      - name: Test
-        working-directory: build
-        shell: bash
-        run: ctest --build-config ${{ matrix.build_type }}
+    - name: Build
+      shell: bash
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build_type }}
+
+    - name: Test
+      working-directory: ${{ github.workspace }}/build
+      shell: bash
+      run: ctest --build-config ${{ matrix.build_type }}
 
   deploy:
     needs: build
     runs-on: self-hosted
-
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          clean: true
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}  # Sử dụng token mặc định
 
       - name: Git Fetch & Reset
         run: |
@@ -71,13 +79,19 @@ jobs:
 
       - name: Clean and Build
         run: |
-          rm -rf build/ CMakeCache.txt CMakeFiles/
-
-          cmake -S . -B build \
-                -DCMAKE_BUILD_TYPE=Release
-
-          cmake --build build --target all
+          # Xóa thư mục build và cache cũ
+          rm -rf build/
+          rm -rf CMakeCache.txt
+          rm -rf CMakeFiles/
           
+          # Tạo build mới
+          cmake -B build \
+                -DCMAKE_BUILD_TYPE=Release
+          
+          # Build project
+          cmake --build build
+          
+          # Tạo thư mục bin và copy executable
           mkdir -p bin
           cp build/MyExecutable bin/ || true
 
@@ -86,4 +100,4 @@ jobs:
         with:
           name: macos-build
           path: bin/MyExecutable
-          retention-days: 5
+          retention-days: 5  # Thêm thời gian lưu trữ artifact
