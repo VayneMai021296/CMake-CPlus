@@ -8,8 +8,8 @@ cmake_minimum_required(VERSION 3.10)
 # Khai báo tên dự án là "main", với phiên bản 1.0 và ngôn ngữ được sử dụng là C++
 project(main VERSION 1.0 LANGUAGES CXX)
 
-# Thiết lập chuẩn C++ cho dự án là C++17
-set(CMAKE_CXX_STANDARD 11)
+# Thay đổi từ C++11 thành C++17
+set(CMAKE_CXX_STANDARD 17)
 # Yêu cầu bắt buộc phải sử dụng C++17, nếu không có sẽ báo lỗi
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
