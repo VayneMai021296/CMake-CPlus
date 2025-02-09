@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 3.10)
 project(main VERSION 1.0 LANGUAGES CXX)
 
 # Thiết lập chuẩn C++ cho dự án là C++17
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 11)
 # Yêu cầu bắt buộc phải sử dụng C++17, nếu không có sẽ báo lỗi
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
