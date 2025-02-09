@@ -75,15 +75,23 @@ jobs:
         run: git pull origin main
         shell: bash
 
-      - name: Build and Deploy
+      - name: Clean and Build
         run: |
-          cmake -B build
-          cmake --build build
-          mkdir -p bin
-          cp build/bin/MyExecutable bin/
+          # Xóa thư mục build và cache cũ
+          rm -rf build/
+          rm -rf CMakeCache.txt
+          rm -rf CMakeFiles/
           
-          # Restart service nếu cần
-          # brew services restart myapp  # Uncomment nếu bạn cần restart service
+          # Tạo build mới
+          cmake -B build \
+                -DCMAKE_BUILD_TYPE=Release
+          
+          # Build project
+          cmake --build build
+          
+          # Tạo thư mục bin và copy executable
+          mkdir -p bin
+          cp build/bin/MyExecutable bin/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
