@@ -86,7 +86,8 @@ jobs:
           # brew services restart myapp  # Uncomment nếu bạn cần restart service
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: macos-build
           path: bin/MyExecutable
+          retention-days: 5  # Thêm thời gian lưu trữ artifact
