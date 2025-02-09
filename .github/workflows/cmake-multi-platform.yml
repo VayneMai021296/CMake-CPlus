@@ -62,7 +62,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: macos-latest
+    runs-on: self-hosted
     
     steps:
       - name: Checkout repository
