@@ -91,7 +91,7 @@ jobs:
           
           # Tạo thư mục bin và copy executable
           mkdir -p bin
-          cp build/bin/MyExecutable bin/ || true
+          cp build/MyExecutable bin/ || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
