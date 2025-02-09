@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
@@ -31,7 +31,7 @@ jobs:
       with:
         clean: true
         fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.GITHUB_TOKEN }}  # Sử dụng token mặc định
 
     - name: Git Pull
       run: git pull origin main
@@ -39,27 +39,26 @@ jobs:
 
     - name: Clean previous builds
       run: |
-        rm -rf build/
-        rm -rf CMakeCache.txt
-        rm -rf CMakeFiles/
+        rm -rf ${{ github.workspace }}/build
+        git clean -ffdx
       shell: bash
 
     - name: Configure CMake
       shell: bash
       run: |
-        cmake -B build \
+        cmake -B ${{ github.workspace }}/build \
               -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
               -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
               -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
     - name: Build
       shell: bash
-      run: cmake --build build --config Release
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build_type }}
 
-    - name: Copy to bin
-      run: |
-        mkdir -p bin
-        cp build/bin/MyExecutable bin/ || true
+    - name: Test
+      working-directory: ${{ github.workspace }}/build
+      shell: bash
+      run: ctest --build-config ${{ matrix.build_type }}
 
   deploy:
     needs: build
@@ -70,7 +69,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}  # Sử dụng token mặc định
 
       - name: Git Pull
         run: git pull origin main
@@ -99,4 +98,4 @@ jobs:
         with:
           name: macos-build
           path: bin/MyExecutable
-          retention-days: 5
+          retention-days: 5  # Thêm thời gian lưu trữ artifact
