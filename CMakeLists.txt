@@ -13,6 +13,20 @@ set(CMAKE_CXX_STANDARD 17)
 # Yêu cầu bắt buộc phải sử dụng C++17, nếu không có sẽ báo lỗi
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# Xác định hệ điều hành
+if(APPLE)
+    message(STATUS "Compiling on macOS 🎯")
+    set(CMAKE_SYSTEM_NAME Darwin)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0")  # Hỗ trợ từ macOS 11 trở lên
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic")
+    
+    # Thiết lập kiến trúc Universal (Intel + Apple Silicon)
+    set(CMAKE_OSX_ARCHITECTURES "x86_64;arm64")
+    
+    # RPATH để tránh lỗi thiếu thư viện khi chạy app
+    set(CMAKE_INSTALL_RPATH "@loader_path/../lib")
+endif()
+
 # Thêm đường dẫn đến thư mục Header để compiler có thể tìm thấy các file header
 include_directories(Header)
 
