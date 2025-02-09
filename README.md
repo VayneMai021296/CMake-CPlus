@@ -1,4 +1,4 @@
-# Cplus with CMake
+# Cplus with CMake, How to make configuration CI/CD with github Action on MacOS and WindowOS
 
 # 🚀 CI/CD trên SSH Server với GitHub Actions - Tài Liệu Hướng Dẫn Chuẩn
 
