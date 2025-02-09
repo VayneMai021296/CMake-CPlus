@@ -33,3 +33,9 @@
 
 # Ignore the main executable
 main
+
+# Build directories and cache
+build/
+CMakeCache.txt
+CMakeFiles/
+*.cmake
