@@ -68,11 +68,11 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H 192.168.1.2 >> ~/.ssh/known_hosts
+          ssh-keyscan -H 192.168.1.2 >> ~/.ssh/authorized_keys
 
       - name: Deploy to macOS
         run: |
-          ssh your-user@192.168.1.2 "
-          cd /path/to/your/app &&
+          ssh vayne@192.168.1.2 "
+          cd cd Desktop/CMake-CPlus &&
           git pull origin main &&
           brew services restart your-app-service"
