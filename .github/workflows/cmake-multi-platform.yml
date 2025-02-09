@@ -55,14 +55,30 @@ jobs:
       run: ctest --build-config ${{ matrix.build_type }}
 
   deploy:
-    
+    needs: build
     runs-on: macos-latest
+    
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Deploy Locally
+      - name: Build and Deploy
         run: |
-          cd Desktop/CMake-CPlus      
-          git pull origin main
-          brew services restart myapp
+          # Tạo thư mục build
+          cmake -B build
+          
+          # Build project
+          cmake --build build
+          
+          # Copy executable vào thư mục bin (nếu cần)
+          mkdir -p bin
+          cp build/bin/MyExecutable bin/
+          
+          # Restart service nếu cần
+          # brew services restart myapp  # Uncomment nếu bạn cần restart service
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: macos-build
+          path: bin/MyExecutable
