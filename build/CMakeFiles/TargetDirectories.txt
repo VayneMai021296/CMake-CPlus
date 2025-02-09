@@ -1,0 +1,3 @@
+/Users/vayne/Desktop/CMake-CPlus/build/CMakeFiles/MyExecutable.dir
+/Users/vayne/Desktop/CMake-CPlus/build/CMakeFiles/edit_cache.dir
+/Users/vayne/Desktop/CMake-CPlus/build/CMakeFiles/rebuild_cache.dir
