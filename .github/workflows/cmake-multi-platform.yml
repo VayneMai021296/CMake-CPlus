@@ -76,6 +76,7 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           git clean -fdx
+          git pull origin main
 
       - name: Clean and Build
         run: |
