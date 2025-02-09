@@ -43,6 +43,7 @@ class  Derived : public Base {
         Derived(){
             cout << "Caliing Derived Constructor ..." << endl;
             house = new House();
+            walls = "White";
         };
         ~Derived () {
             cout << "Calling Derived Destructor ..." << endl;
