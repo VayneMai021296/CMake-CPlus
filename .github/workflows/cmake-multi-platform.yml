@@ -17,18 +17,18 @@ jobs:
             c_compiler: gcc
             cpp_compiler: g++
             # Đường dẫn artifact trên Unix: sử dụng dấu /
-            artifact_path: "${{ github.workspace }}/build/MyExecutable"
+            artifact_path: "${{ github.workspace }}/MyExecutable"
           - os: windows-latest
             build_type: Release
             c_compiler: cl
             cpp_compiler: cl
             # Đường dẫn artifact trên Windows: sử dụng escape cho backslash
-            artifact_path: "${{ github.workspace }}\\build\\MyExecutable.exe"
+            artifact_path: "${{ github.workspace }}\\MyExecutable.exe"
           - os: macos-latest
             build_type: Release
             c_compiler: clang
             cpp_compiler: clang++
-            artifact_path: "${{ github.workspace }}/build/MyExecutable"
+            artifact_path: "${{ github.workspace }}/MyExecutable"
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -108,11 +108,11 @@ jobs:
         shell: cmd
 
       # Upload build artifact
-      - name: Upload Build Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifact-${{ matrix.os }}
-          path: ${{ matrix.artifact_path }}
+      #- name: Upload Build Artifact
+       # uses: actions/upload-artifact@v4
+        #with:
+          #name: artifact-${{ matrix.os }}
+          #path: ${{ matrix.artifact_path }}
 
   deploy:
     needs: build
@@ -132,11 +132,11 @@ jobs:
 
     steps:
       - name: Download Build Artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v3
         with:
           name: ${{ matrix.artifact_name }}
           path: deploy
-          merge-multiple: false
+          
 
 
       # Ví dụ deploy: copy artifact sang thư mục deploy, chạy script deploy, v.v.
