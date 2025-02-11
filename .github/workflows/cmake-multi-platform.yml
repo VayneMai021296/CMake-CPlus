@@ -16,17 +16,17 @@ jobs:
             build_type: Release
             c_compiler: gcc
             cpp_compiler: g++
-            artifact_path: "${{ github.workspace }}/build/MyExecutable"
+            artifact_path: "build/MyExecutable"
           - os: windows-latest
             build_type: Release
             c_compiler: cl
             cpp_compiler: cl
-            artifact_path: "${{ github.workspace }}\\build\\MyExecutable.exe"
+            artifact_path: "build\\MyExecutable.exe"
           - os: macos-latest
             build_type: Release
             c_compiler: clang
             cpp_compiler: clang++
-            artifact_path: "${{ github.workspace }}/build/MyExecutable"
+            artifact_path: "build/MyExecutable"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -50,14 +50,14 @@ jobs:
       - name: Clean previous builds (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          rm -rf "${{ github.workspace }}/build"
+          rm -rf build
           git clean -ffdx
         shell: bash
 
       - name: Clean previous builds (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          rmdir /S /Q "${{ github.workspace }}\\build"
+          rmdir /S /Q "build"
           git clean -ffdx
         shell: cmd
 
@@ -65,7 +65,7 @@ jobs:
       - name: Configure CMake (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          cmake -B "${{ github.workspace }}/build" \
+          cmake -B build \
                 -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
                 -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
@@ -74,7 +74,7 @@ jobs:
       - name: Configure CMake (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          cmake -B "${{ github.workspace }}\\build" ^
+          cmake -B build ^
                 -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} ^
                 -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} ^
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
@@ -83,44 +83,55 @@ jobs:
       # Build
       - name: Build (Unix)
         if: matrix.os != 'windows-latest'
-        run: cmake --build "${{ github.workspace }}/build"
+        run: cmake --build build
         shell: bash
 
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
-        run: cmake --build "${{ github.workspace }}\\build" --config ${{ matrix.build_type }}
+        run: cmake --build build --config ${{ matrix.build_type }}
         shell: cmd
 
       # Test
       - name: Test (Unix)
         if: matrix.os != 'windows-latest'
-        working-directory: "${{ github.workspace }}/build"
+        working-directory: build
         run: ctest
         shell: bash
 
       - name: Test (Windows)
         if: matrix.os == 'windows-latest'
-        working-directory: "${{ github.workspace }}\\build"
+        working-directory: build
         run: ctest --build-config ${{ matrix.build_type }}
         shell: cmd
 
-      # Ensure artifact exists (tạo file dummy nếu cần)
+      # Kiểm tra nội dung thư mục build để đảm bảo file artifact được tạo ra
+      - name: List Build Directory (Unix)
+        if: matrix.os != 'windows-latest'
+        run: ls -la build
+        shell: bash
+
+      - name: List Build Directory (Windows)
+        if: matrix.os == 'windows-latest'
+        run: dir build
+        shell: cmd
+
+      # Nếu file artifact không tồn tại, tạo file dummy (bước này chỉ là tùy chọn để đảm bảo artifact luôn tồn tại)
       - name: Ensure Artifact Exists (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          if [ ! -f "${{ github.workspace }}/build/MyExecutable" ]; then
+          if [ ! -f "build/MyExecutable" ]; then
             echo "Artifact not found, creating dummy artifact..."
-            echo "Dummy executable" > "${{ github.workspace }}/build/MyExecutable"
-            chmod +x "${{ github.workspace }}/build/MyExecutable"
+            echo "Dummy executable" > build/MyExecutable
+            chmod +x build/MyExecutable
           fi
         shell: bash
 
       - name: Ensure Artifact Exists (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          if not exist "${{ github.workspace }}\build\MyExecutable.exe" (
+          if not exist "build\MyExecutable.exe" (
             echo Creating dummy artifact...
-            echo Dummy executable > "${{ github.workspace }}\build\MyExecutable.exe"
+            echo Dummy executable > "build\MyExecutable.exe"
           )
         shell: cmd
 
