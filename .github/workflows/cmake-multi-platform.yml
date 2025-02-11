@@ -42,7 +42,8 @@ jobs:
               -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
               -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
               -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-      shell: ${{ if eq(matrix.os, 'windows-latest') }}cmd{{ else }}bash{{ end }}
+      shell: "${{ matrix.os == 'windows-latest' ? 'cmd' : 'bash'}}"
+
 
     - name: Build
       run: cmake --build build --config ${{ matrix.build_type }}
@@ -92,4 +93,4 @@ jobs:
         with:
           name: macos-build
           path: bin/MyExecutable
-          retention-days: 5  # Thêm thời gian lưu trữ artifact
+          retention-days: 5
