@@ -55,7 +55,7 @@ jobs:
       - name: Clean previous builds (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          rmdir /S /Q "%GITHUB_WORKSPACE%\build"
+          rmdir /S /Q "${{ github.workspace }}\build"
           git clean -ffdx
         shell: cmd
 
@@ -72,7 +72,7 @@ jobs:
       - name: Configure CMake (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          cmake -B "%GITHUB_WORKSPACE%\build" ^
+          cmake -B "${{ github.workspace }}\build" ^
                 -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} ^
                 -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} ^
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
@@ -86,7 +86,7 @@ jobs:
 
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
-        run: cmake --build "%GITHUB_WORKSPACE%\build" --config ${{ matrix.build_type }}
+        run: cmake --build "${{ github.workspace }}\build" --config ${{ matrix.build_type }}
         shell: cmd
 
       # Test
@@ -98,7 +98,7 @@ jobs:
 
       - name: Test (Windows)
         if: matrix.os == 'windows-latest'
-        working-directory: "%GITHUB_WORKSPACE%\build"
+        working-directory: "${{ github.workspace }}\build"
         run: ctest --build-config ${{ matrix.build_type }}
         shell: cmd
 
@@ -128,6 +128,7 @@ jobs:
           cmake --build build
           mkdir -p bin
           cp build/MyExecutable bin/ || true
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
