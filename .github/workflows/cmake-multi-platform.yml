@@ -16,17 +16,18 @@ jobs:
             build_type: Release
             c_compiler: gcc
             cpp_compiler: g++
-            artifact_path: "build/MyExecutable"
+            # Artifact upload: toàn bộ thư mục build
+            artifact_path: "build"
           - os: windows-latest
             build_type: Release
             c_compiler: cl
             cpp_compiler: cl
-            artifact_path: "build\\MyExecutable.exe"
+            artifact_path: "build"
           - os: macos-latest
             build_type: Release
             c_compiler: clang
             cpp_compiler: clang++
-            artifact_path: "build/MyExecutable"
+            artifact_path: "build"
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -91,20 +92,7 @@ jobs:
         run: cmake --build build --config ${{ matrix.build_type }}
         shell: cmd
 
-      # Test
-      - name: Test (Unix)
-        if: matrix.os != 'windows-latest'
-        working-directory: build
-        run: ctest
-        shell: bash
-
-      - name: Test (Windows)
-        if: matrix.os == 'windows-latest'
-        working-directory: build
-        run: ctest --build-config ${{ matrix.build_type }}
-        shell: cmd
-
-      # Kiểm tra nội dung thư mục build để đảm bảo file artifact được tạo ra
+      # (Tùy chọn) Kiểm tra nội dung thư mục build để debug
       - name: List Build Directory (Unix)
         if: matrix.os != 'windows-latest'
         run: ls -la build
@@ -115,7 +103,7 @@ jobs:
         run: dir build
         shell: cmd
 
-      # Nếu file artifact không tồn tại, tạo file dummy (bước này chỉ là tùy chọn để đảm bảo artifact luôn tồn tại)
+      # (Tùy chọn) Đảm bảo artifact tồn tại (nếu chưa có, tạo file dummy)
       - name: Ensure Artifact Exists (Unix)
         if: matrix.os != 'windows-latest'
         run: |
@@ -135,15 +123,51 @@ jobs:
           )
         shell: cmd
 
-      # Upload build artifact
+      # Upload toàn bộ thư mục build dưới dạng artifact
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: artifact-${{ matrix.os }}
+          name: build-artifact-${{ matrix.os }}
           path: ${{ matrix.artifact_path }}
 
-  deploy:
+  test:
     needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            deploy_shell: bash
+            artifact_name: "build-artifact-ubuntu-latest"
+          - os: windows-latest
+            deploy_shell: cmd
+            artifact_name: "build-artifact-windows-latest"
+          - os: macos-latest
+            deploy_shell: bash
+            artifact_name: "build-artifact-macos-latest"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: build
+          merge-multiple: false
+
+      - name: Run Tests (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: build
+        run: ctest --build-config ${{ matrix.build_type }}
+        shell: cmd
+
+      - name: Run Tests (Unix)
+        if: matrix.os != 'windows-latest'
+        working-directory: build
+        run: ctest
+        shell: bash
+
+  deploy:
+    needs: [build, test]
     strategy:
       matrix:
         include:
@@ -158,7 +182,7 @@ jobs:
             artifact_name: "artifact-macos-latest"
     runs-on: ${{ matrix.os }}
     steps:
-      - name: Download Build Artifact
+      - name: Download Deployment Artifact
         uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
