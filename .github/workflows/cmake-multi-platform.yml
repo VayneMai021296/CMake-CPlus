@@ -8,24 +8,23 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-
     strategy:
       fail-fast: false
       matrix:
-        # Giá trị mặc định sẽ được ghi đè bởi phần include
-        os: [macos-latest]
-        build_type: [Release]
         include:
           - os: ubuntu-latest
+            build_type: Release
             c_compiler: gcc
             cpp_compiler: g++
           - os: windows-latest
+            build_type: Release
             c_compiler: cl
             cpp_compiler: cl
           - os: macos-latest
+            build_type: Release
             c_compiler: clang
             cpp_compiler: clang++
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -34,46 +33,104 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Git Pull
+      # Git Pull
+      - name: Git Pull (Unix)
+        if: matrix.os != 'windows-latest'
         run: git pull origin main
         shell: bash
 
-      - name: Clean previous builds
+      - name: Git Pull (Windows)
+        if: matrix.os == 'windows-latest'
+        run: git pull origin main
+        shell: cmd
+
+      # Clean previous builds
+      - name: Clean previous builds (Unix)
+        if: matrix.os != 'windows-latest'
         run: |
           rm -rf "${{ github.workspace }}/build"
           git clean -ffdx
         shell: bash
 
-      - name: Configure CMake
-        shell: bash
+      - name: Clean previous builds (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          rmdir /S /Q "%GITHUB_WORKSPACE%\build"
+          git clean -ffdx
+        shell: cmd
+
+      # Configure CMake
+      - name: Configure CMake (Unix)
+        if: matrix.os != 'windows-latest'
         run: |
           cmake -B "${{ github.workspace }}/build" \
                 -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
                 -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        shell: bash
 
-      # Build bước riêng cho Unix (Ubuntu, macOS) không sử dụng --config
+      - name: Configure CMake (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cmake -B "%GITHUB_WORKSPACE%\build" ^
+                -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} ^
+                -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} ^
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        shell: cmd
+
+      # Build
       - name: Build (Unix)
         if: matrix.os != 'windows-latest'
-        shell: bash
         run: cmake --build "${{ github.workspace }}/build"
+        shell: bash
 
-      # Build bước riêng cho Windows sử dụng --config
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
-        shell: cmd
         run: cmake --build "%GITHUB_WORKSPACE%\build" --config ${{ matrix.build_type }}
+        shell: cmd
 
-      # Test bước riêng cho Unix: không sử dụng --build-config
+      # Test
       - name: Test (Unix)
         if: matrix.os != 'windows-latest'
         working-directory: "${{ github.workspace }}/build"
-        shell: bash
         run: ctest
+        shell: bash
 
-      # Test bước riêng cho Windows: sử dụng --build-config nếu cần
       - name: Test (Windows)
         if: matrix.os == 'windows-latest'
         working-directory: "%GITHUB_WORKSPACE%\build"
-        shell: cmd
         run: ctest --build-config ${{ matrix.build_type }}
+        shell: cmd
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Git Fetch & Reset
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
+          git clean -fdx
+          git pull origin main
+
+      - name: Clean and Build
+        run: |
+          rm -rf build/
+          rm -rf CMakeCache.txt
+          rm -rf CMakeFiles/
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+          mkdir -p bin
+          cp build/MyExecutable bin/ || true
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-build
+          path: bin/MyExecutable
+          retention-days: 5
