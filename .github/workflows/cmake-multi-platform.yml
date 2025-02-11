@@ -16,13 +16,11 @@ jobs:
             build_type: Release
             c_compiler: gcc
             cpp_compiler: g++
-            # Đường dẫn artifact trên Unix: sử dụng dấu /
             artifact_path: "${{ github.workspace }}/build/MyExecutable"
           - os: windows-latest
             build_type: Release
             c_compiler: cl
             cpp_compiler: cl
-            # Đường dẫn artifact trên Windows: sử dụng escape cho backslash và thêm phần mở rộng nếu cần
             artifact_path: "${{ github.workspace }}\\build\\MyExecutable.exe"
           - os: macos-latest
             build_type: Release
@@ -30,13 +28,12 @@ jobs:
             cpp_compiler: clang++
             artifact_path: "${{ github.workspace }}/build/MyExecutable"
     runs-on: ${{ matrix.os }}
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
           clean: true
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       # Git Pull
       - name: Git Pull (Unix)
@@ -129,7 +126,6 @@ jobs:
             deploy_shell: bash
             artifact_name: "artifact-macos-latest"
     runs-on: ${{ matrix.os }}
-
     steps:
       - name: Download Build Artifact
         uses: actions/download-artifact@v4
@@ -138,13 +134,12 @@ jobs:
           path: deploy
           merge-multiple: false
 
-      # Ví dụ deploy: liệt kê nội dung thư mục deploy
       - name: Deploy Step (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           echo Deploying on Windows...
           dir deploy
-          REM Chạy các bước deploy cụ thể cho Windows tại đây (ví dụ: chạy batch script)
+          REM Thực hiện các bước deploy cụ thể cho Windows tại đây
         shell: cmd
 
       - name: Deploy Step (Unix)
@@ -152,7 +147,7 @@ jobs:
         run: |
           echo "Deploying on ${{ matrix.os }}..."
           ls -l deploy
-          # Chạy các bước deploy cụ thể cho Unix tại đây (ví dụ: chạy bash script)
+          # Thực hiện các bước deploy cụ thể cho Unix tại đây
         shell: bash
 
       - name: Upload Deployment Artifact
