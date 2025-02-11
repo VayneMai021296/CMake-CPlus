@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include "Header/virtual_destructor.h"
 #include "Header/std_unique_ptr.h"
 

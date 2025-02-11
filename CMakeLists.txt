@@ -10,6 +10,7 @@ project(main VERSION 1.0 LANGUAGES CXX)
 
 # Thay đổi từ C++11 thành C++17
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Yêu cầu bắt buộc phải sử dụng C++17, nếu không có sẽ báo lỗi
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
