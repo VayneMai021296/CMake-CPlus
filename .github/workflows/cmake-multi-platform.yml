@@ -136,6 +136,8 @@ jobs:
         with:
           name: ${{ matrix.artifact_name }}
           path: deploy
+          merge-multiple: false
+
 
       # Ví dụ deploy: copy artifact sang thư mục deploy, chạy script deploy, v.v.
       - name: Deploy Step (Windows)
