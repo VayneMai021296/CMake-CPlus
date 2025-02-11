@@ -16,14 +16,19 @@ jobs:
             build_type: Release
             c_compiler: gcc
             cpp_compiler: g++
+            # Đường dẫn artifact trên Unix: sử dụng dấu /
+            artifact_path: "${{ github.workspace }}/build/MyExecutable"
           - os: windows-latest
             build_type: Release
             c_compiler: cl
             cpp_compiler: cl
+            # Đường dẫn artifact trên Windows: sử dụng escape cho backslash
+            artifact_path: "${{ github.workspace }}\\build\\MyExecutable.exe"
           - os: macos-latest
             build_type: Release
             c_compiler: clang
             cpp_compiler: clang++
+            artifact_path: "${{ github.workspace }}/build/MyExecutable"
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -33,11 +38,24 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      # Các bước dành cho Windows
+      # Git Pull
+      - name: Git Pull (Unix)
+        if: matrix.os != 'windows-latest'
+        run: git pull origin main
+        shell: bash
+
       - name: Git Pull (Windows)
         if: matrix.os == 'windows-latest'
         run: git pull origin main
         shell: cmd
+
+      # Clean previous builds
+      - name: Clean previous builds (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          rm -rf "${{ github.workspace }}/build"
+          git clean -ffdx
+        shell: bash
 
       - name: Clean previous builds (Windows)
         if: matrix.os == 'windows-latest'
@@ -45,6 +63,16 @@ jobs:
           rmdir /S /Q "${{ github.workspace }}\\build"
           git clean -ffdx
         shell: cmd
+
+      # Configure CMake
+      - name: Configure CMake (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cmake -B "${{ github.workspace }}/build" \
+                -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+                -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        shell: bash
 
       - name: Configure CMake (Windows)
         if: matrix.os == 'windows-latest'
@@ -55,10 +83,23 @@ jobs:
                 -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         shell: cmd
 
+      # Build
+      - name: Build (Unix)
+        if: matrix.os != 'windows-latest'
+        run: cmake --build "${{ github.workspace }}/build"
+        shell: bash
+
       - name: Build (Windows)
         if: matrix.os == 'windows-latest'
         run: cmake --build "${{ github.workspace }}\\build" --config ${{ matrix.build_type }}
         shell: cmd
+
+      # Test
+      - name: Test (Unix)
+        if: matrix.os != 'windows-latest'
+        working-directory: "${{ github.workspace }}/build"
+        run: ctest
+        shell: bash
 
       - name: Test (Windows)
         if: matrix.os == 'windows-latest'
@@ -66,35 +107,55 @@ jobs:
         run: ctest --build-config ${{ matrix.build_type }}
         shell: cmd
 
-      # Các bước dành cho Unix (Ubuntu, macOS)
-      - name: Git Pull (Unix)
-        if: matrix.os != 'windows-latest'
-        run: git pull origin main
-        shell: bash
+      # Upload build artifact
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{ matrix.os }}
+          path: ${{ matrix.artifact_path }}
 
-      - name: Clean previous builds (Unix)
+  deploy:
+    needs: build
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            deploy_shell: bash
+            artifact_name: "artifact-ubuntu-latest"
+          - os: windows-latest
+            deploy_shell: cmd
+            artifact_name: "artifact-windows-latest"
+          - os: macos-latest
+            deploy_shell: bash
+            artifact_name: "artifact-macos-latest"
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Download Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: deploy
+
+      # Ví dụ deploy: copy artifact sang thư mục deploy, chạy script deploy, v.v.
+      - name: Deploy Step (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo Deploying on Windows...
+          dir deploy
+          REM Thực hiện các bước deploy cụ thể cho Windows tại đây (VD: chạy batch script)
+        shell: cmd
+
+      - name: Deploy Step (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          rm -rf "${{ github.workspace }}/build"
-          git clean -ffdx
+          echo "Deploying on ${{ matrix.os }}..."
+          ls -l deploy
+          # Thực hiện các bước deploy cụ thể cho Unix tại đây (VD: chạy bash script)
         shell: bash
 
-      - name: Configure CMake (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cmake -B "${{ github.workspace }}/build" \
-                -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
-                -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
-                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        shell: bash
-
-      - name: Build (Unix)
-        if: matrix.os != 'windows-latest'
-        run: cmake --build "${{ github.workspace }}/build"
-        shell: bash
-
-      - name: Test (Unix)
-        if: matrix.os != 'windows-latest'
-        working-directory: "${{ github.workspace }}/build"
-        run: ctest
-        shell: bash
+      - name: Upload Deployment Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-${{ matrix.os }}
+          path: deploy/
