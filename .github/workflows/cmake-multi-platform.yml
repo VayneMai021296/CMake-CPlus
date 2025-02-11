@@ -17,18 +17,18 @@ jobs:
             c_compiler: gcc
             cpp_compiler: g++
             # Đường dẫn artifact trên Unix: sử dụng dấu /
-            artifact_path: "${{ github.workspace }}/MyExecutable"
+            artifact_path: "${{ github.workspace }}/build/MyExecutable"
           - os: windows-latest
             build_type: Release
             c_compiler: cl
             cpp_compiler: cl
-            # Đường dẫn artifact trên Windows: sử dụng escape cho backslash
-            artifact_path: "${{ github.workspace }}\\MyExecutable.exe"
+            # Đường dẫn artifact trên Windows: sử dụng escape cho backslash và thêm phần mở rộng nếu cần
+            artifact_path: "${{ github.workspace }}\\build\\MyExecutable.exe"
           - os: macos-latest
             build_type: Release
             c_compiler: clang
             cpp_compiler: clang++
-            artifact_path: "${{ github.workspace }}/MyExecutable"
+            artifact_path: "${{ github.workspace }}/build/MyExecutable"
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -108,11 +108,11 @@ jobs:
         shell: cmd
 
       # Upload build artifact
-      #- name: Upload Build Artifact
-       # uses: actions/upload-artifact@v4
-        #with:
-          #name: artifact-${{ matrix.os }}
-          #path: ${{ matrix.artifact_path }}
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact-${{ matrix.os }}
+          path: ${{ matrix.artifact_path }}
 
   deploy:
     needs: build
@@ -132,20 +132,19 @@ jobs:
 
     steps:
       - name: Download Build Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: ${{ matrix.artifact_name }}
           path: deploy
-          
+          merge-multiple: false
 
-
-      # Ví dụ deploy: copy artifact sang thư mục deploy, chạy script deploy, v.v.
+      # Ví dụ deploy: liệt kê nội dung thư mục deploy
       - name: Deploy Step (Windows)
         if: matrix.os == 'windows-latest'
         run: |
           echo Deploying on Windows...
           dir deploy
-          REM Thực hiện các bước deploy cụ thể cho Windows tại đây (VD: chạy batch script)
+          REM Chạy các bước deploy cụ thể cho Windows tại đây (ví dụ: chạy batch script)
         shell: cmd
 
       - name: Deploy Step (Unix)
@@ -153,7 +152,7 @@ jobs:
         run: |
           echo "Deploying on ${{ matrix.os }}..."
           ls -l deploy
-          # Thực hiện các bước deploy cụ thể cho Unix tại đây (VD: chạy bash script)
+          # Chạy các bước deploy cụ thể cho Unix tại đây (ví dụ: chạy bash script)
         shell: bash
 
       - name: Upload Deployment Artifact
