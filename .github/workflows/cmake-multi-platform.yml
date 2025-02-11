@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest]
+        os: [macos-latest]  # Giá trị mặc định; các include sẽ ghi đè
         build_type: [Release]
         include:
           - os: ubuntu-latest
@@ -25,51 +25,92 @@ jobs:
           - os: macos-latest
             c_compiler: clang
             cpp_compiler: clang++
-
+    
     steps:
-    - uses: actions/checkout@v4
-      with:
-        clean: true
-        fetch-depth: 0
-        token: ${{ secrets.GITHUB_TOKEN }}  # Sử dụng token mặc định
+      - uses: actions/checkout@v4
+        with:
+          clean: true
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Git Pull
-      run: git pull origin main
-      shell: bash
+      # Git Pull
+      - name: Git Pull (Unix)
+        if: matrix.os != 'windows-latest'
+        run: git pull origin main
+        shell: bash
 
-    - name: Clean previous builds
-      run: |
-        rm -rf ${{ github.workspace }}/build
-        git clean -ffdx
-      shell: bash
+      - name: Git Pull (Windows)
+        if: matrix.os == 'windows-latest'
+        run: git pull origin main
+        shell: cmd
 
-    - name: Configure CMake
-      shell: bash
-      run: |
-        cmake -B ${{ github.workspace }}/build \
-              -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
-              -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
-              -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      # Clean previous builds
+      - name: Clean previous builds (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          rm -rf "${{ github.workspace }}/build"
+          git clean -ffdx
+        shell: bash
 
-    - name: Build
-      shell: bash
-      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build_type }}
+      - name: Clean previous builds (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          rmdir /S /Q "%GITHUB_WORKSPACE%\build"
+          git clean -ffdx
+        shell: cmd
 
-    - name: Test
-      working-directory: ${{ github.workspace }}/build
-      shell: bash
-      run: ctest --build-config ${{ matrix.build_type }}
+      # Configure CMake
+      - name: Configure CMake (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          cmake -B "${{ github.workspace }}/build" \
+                -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
+                -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        shell: bash
+
+      - name: Configure CMake (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cmake -B "%GITHUB_WORKSPACE%\build" ^
+                -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} ^
+                -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} ^
+                -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        shell: cmd
+
+      # Build
+      - name: Build (Unix)
+        if: matrix.os != 'windows-latest'
+        run: cmake --build "${{ github.workspace }}/build" --config ${{ matrix.build_type }}
+        shell: bash
+
+      - name: Build (Windows)
+        if: matrix.os == 'windows-latest'
+        run: cmake --build "%GITHUB_WORKSPACE%\build" --config ${{ matrix.build_type }}
+        shell: cmd
+
+      # Test
+      - name: Test (Unix)
+        if: matrix.os != 'windows-latest'
+        working-directory: "${{ github.workspace }}/build"
+        run: ctest --build-config ${{ matrix.build_type }}
+        shell: bash
+
+      - name: Test (Windows)
+        if: matrix.os == 'windows-latest'
+        working-directory: "%GITHUB_WORKSPACE%\build"
+        run: ctest --build-config ${{ matrix.build_type }}
+        shell: cmd
 
   deploy:
     needs: build
     runs-on: self-hosted
-    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}  # Sử dụng token mặc định
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Git Fetch & Reset
         run: |
@@ -86,8 +127,7 @@ jobs:
           rm -rf CMakeFiles/
           
           # Tạo build mới
-          cmake -B build \
-                -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
           
           # Build project
           cmake --build build
@@ -101,4 +141,4 @@ jobs:
         with:
           name: macos-build
           path: bin/MyExecutable
-          retention-days: 5  # Thêm thời gian lưu trữ artifact
+          retention-days: 5
