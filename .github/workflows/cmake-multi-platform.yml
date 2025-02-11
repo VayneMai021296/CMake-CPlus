@@ -19,15 +19,12 @@ jobs:
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
-            shell: bash
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
-            shell: cmd
           - os: macos-latest
             c_compiler: clang
             cpp_compiler: clang++
-            shell: bash
 
     steps:
     - uses: actions/checkout@v4
@@ -40,21 +37,21 @@ jobs:
       uses: lukka/get-cmake@v3
 
     - name: Configure CMake
-      shell: ${{ matrix.shell }}
       run: |
         cmake -B build \
               -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} \
               -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} \
               -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+      shell: ${{ if eq(matrix.os, 'windows-latest') }}cmd{{ else }}bash{{ end }}
 
     - name: Build
-      shell: ${{ matrix.shell }}
       run: cmake --build build --config ${{ matrix.build_type }}
+      shell: ${{ if eq(matrix.os, 'windows-latest') }}cmd{{ else }}bash{{ end }}
 
     - name: Test
       working-directory: build
-      shell: ${{ matrix.shell }}
       run: ctest --build-config ${{ matrix.build_type }}
+      shell: ${{ if eq(matrix.os, 'windows-latest') }}cmd{{ else }}bash{{ end }}
 
   deploy:
     needs: build
@@ -76,12 +73,10 @@ jobs:
 
       - name: Clean and Build
         run: |
-          # Xóa thư mục build và cache cũ
           rm -rf build/
           rm -rf CMakeCache.txt
           rm -rf CMakeFiles/
           
-          # Tạo build mới
           cmake -B build \
                 -DCMAKE_BUILD_TYPE=Release
           
