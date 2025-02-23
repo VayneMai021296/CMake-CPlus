@@ -18,6 +18,10 @@ int main(){
         // ? Ở đây, ptr sở hữu đối tượng MyClass
         std::cout << "Trong phạm vi của khối, đối tượng đang được quản lý.\n";
     }
+
+    {
+        
+    }
     
     return 0;
 }
