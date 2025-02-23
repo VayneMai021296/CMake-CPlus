@@ -6,9 +6,7 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/Users/vayne/Desktop/CMake-CPlus/Header
 
-CXX_FLAGSx86_64 = -Wall -Wextra -Wpedantic -std=gnu++17 -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -mmacosx-version-min=11.0
+CXX_FLAGSarm64 = -std=gnu++11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk
 
-CXX_FLAGSarm64 = -Wall -Wextra -Wpedantic -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -mmacosx-version-min=11.0
-
-CXX_FLAGS = -Wall -Wextra -Wpedantic -std=gnu++17 -arch x86_64 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk -mmacosx-version-min=11.0
+CXX_FLAGS = -std=gnu++11 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.1.sdk
 
